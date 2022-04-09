@@ -46,7 +46,7 @@ public class YDK {
 				try {
 					id = Integer.parseInt(line);
 				} catch(NumberFormatException e) {
-					//invalid ydk, throw error
+//invalid ydk, throw error
 				}
 
 				//make and fill a placeholder
@@ -58,7 +58,7 @@ public class YDK {
 				} else if(deck == DECK.SIDE) {
 					dek = side;
 				} else {
-					//invalid ydk, throw error
+//invalid ydk, throw error
 				}
 
 				//is it in the placeholder already
@@ -88,7 +88,14 @@ public class YDK {
 	        	card = new Card(entry.getKey().intValue(), entry.getValue().intValue());
 	        	mainDeck.put(card.name, card);
 	        }
-			//do something with side and extra?
+	        //add extra
+/*			itr = extra.entrySet().iterator();
+	        while(itr.hasNext()) {
+	        	Map.Entry<Integer, Integer> entry = itr.next();
+//insert card to extra?
+	        }
+*/
+			//do something with side?
 		} catch (IOException e) {
 			e.printStackTrace();
 		}

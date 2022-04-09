@@ -214,7 +214,7 @@ public class CardProperties {
 			            }
 			        }
 					if(this.name == null) {
-					//what do I do if not found?
+//what do I do if not found?
 					}
 				} catch (IOException e) {
 					e.printStackTrace();
