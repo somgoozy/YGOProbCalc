@@ -2,8 +2,8 @@ import java.io.File;
 import java.io.FileWriter;
 
 public class Main {
-	
-	public static void main(String args[])
+
+	public static void main1(String args[])
 	{
 		Card dog = card("Fluffal Dog", 3, "fluff", "ns");
 		Card peng = card("Fluffal Penguin", 2, "fluff", "ns");
@@ -409,6 +409,13 @@ public class Main {
 		SmallWorld.banish_fd=banishfd_locnum;
 		SmallWorld.actions();
 	}
-
+	public static void set_extra(int extra_loc)
+	{
+		Gov.extra_deck_index=extra_loc;
+	}
+	public static Condition[] or(Condition... conds)
+	{
+		return conds;
+	}
 }
 
