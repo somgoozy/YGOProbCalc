@@ -1,93 +1,274 @@
-import java.util.Hashtable;
-import java.util.List;
-import java.util.ArrayList;
+import java.io.File;
+import java.io.IOException;
+import java.io.Serializable;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.Map;
+import java.util.Set;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
-public class Card {
+public class Card implements Serializable {
+	//defines what properties make up a card and has a constructor to autofill data from cardinfo.json
+	boolean faceUp;
+	boolean negated;
+	boolean revealed;
+	boolean properlySummoned;
+	int currentAttack;
+	int currentDefence;
+	String path = "cardinfo.json";
 	String name;
-	int num;
-	String[] categories;
-	static List<Card> num_to_card; 
-	static int num_created;
-	static Hashtable<String, List<Integer>> category_hash;
-	static List<Integer> deck;
-	static List<Integer> extra_deck;
-	static int deck_size;
-	static int extra_deck_size;
-	static {
-	num_created=0;
-	num_to_card = new ArrayList<Card>();
-	category_hash =  new Hashtable<String, List<Integer>>();
-	category_hash.put("card", new ArrayList<Integer>());
-	deck = new ArrayList<Integer>();
-	extra_deck = new ArrayList<Integer>();
-	deck_size = 0;
-	extra_deck_size = 0;
+	Set<TYPE> type = new HashSet<>();
+	Set<ATTRIBUTE> attribute = new HashSet<>();
+	Set<PROPERTIES> properties = new HashSet<>();
+	Set<ARROWS> arrows = new HashSet<>();
+	int level;
+	int attack;
+	int defense;
+	int pendScale;
+	int id;
+	int linkRating;
+	//lists of card properties
+	public enum TYPE {
+		//spell and trap type
+		CONTINUOUS,
+		COUNTER,
+		FIELD,
+		EQUIP,
+		NORMAL,
+		QUICK_PLAY,
+		RITUAL,
+		//monster type
+		AQUA,
+		BEAST,
+		BEAST_WARRIOR,
+		CREATOR_GOD,
+		CYBERSE,
+		DINOSAUR,
+		DIVINE_BEAST,
+		DRAGON,
+		FAIRY,
+		FIEND,
+		FISH,
+		INSECT,
+		MACHINE,
+		PLANT,
+		PSYCHIC,
+		PYRO,
+		REPTILE,
+		ROCK,
+		SEA_SERPENT,
+		SPELLCASTER,
+		THUNDER,
+		WARRIOR,
+		WINGED_BEAST
 	}
-	public Card(String name, int quantity)
-	{
-		this.name = name;
-		this.num = num_created;
-		num_to_card.add(this);
-		category_hash.get("card").add(this.num);
-		deck.add(quantity);
-		extra_deck.add(0);
-		deck_size+= quantity;
-		num_created++;
-		categories = new String[0];
+	public enum ATTRIBUTE {
+		//monster attribute
+		DARK,
+		DIVINE,
+		EARTH,
+		FIRE,
+		LIGHT,
+		WATER,
+		WIND
 	}
-	public Card(String name, int quantity, String... cats)
-	{
-		this.name = name;
-		this.num = num_created;
-		num_to_card.add(this);
-		category_hash.get("card").add(this.num);
-		deck.add(quantity);
-		extra_deck.add(0);
-		deck_size+=quantity;
-		num_created++;
-		this.categories = cats;
-		for(String cat : categories)
-		{
-			if (!category_hash.containsKey(cat))
-			{
-				List<Integer> cards = new ArrayList<Integer>();
-				cards.add(this.num);
-				category_hash.put(cat, cards);
+	public enum PROPERTIES {
+		//card type
+		MONSTER,
+		SPELL,
+		TRAP,
+		//monster properties
+		EFFECT,
+		FLIP,
+		GEMINI,
+		NORMAL,
+		PENDULUM,
+		RITUAL,
+		SPIRIT,
+		TOON,
+		TOKEN,
+		TUNER,
+		UNION,
+		//extra deck types
+		FUSION,
+		LINK,
+		SYNCHRO,
+		XYZ
+	}
+	public enum ARROWS {
+		UP,
+		UP_RIGHT,
+		RIGHT,
+		DOWN_RIGHT,
+		DOWN,
+		DOWN_LEFT,
+		LEFT,
+		UP_LEFT
+	}
+	private static final Map<String, Set<PROPERTIES>> prop_map = Map.ofEntries(
+		//maps api strings to sets of property enums
+		Map.entry("effect monster", Set.of(PROPERTIES.MONSTER, PROPERTIES.EFFECT)),
+		Map.entry("flip effect monster", Set.of(PROPERTIES.MONSTER, PROPERTIES.EFFECT, PROPERTIES.FLIP)),
+		Map.entry("flip tuner effect monster", Set.of(PROPERTIES.MONSTER, PROPERTIES.EFFECT, PROPERTIES.FLIP, PROPERTIES.TUNER)),
+		Map.entry("gemini monster", Set.of(PROPERTIES.MONSTER, PROPERTIES.GEMINI)),
+		Map.entry("normal monster", Set.of(PROPERTIES.MONSTER, PROPERTIES.NORMAL)),
+		Map.entry("normal tuner monster", Set.of(PROPERTIES.MONSTER, PROPERTIES.NORMAL, PROPERTIES.TUNER)),
+		Map.entry("pendulum effect monster", Set.of(PROPERTIES.MONSTER, PROPERTIES.PENDULUM, PROPERTIES.EFFECT)),
+		Map.entry("pendulum flip effect monster", Set.of(PROPERTIES.MONSTER, PROPERTIES.PENDULUM, PROPERTIES.EFFECT, PROPERTIES.FLIP)),
+		Map.entry("pendulum normal monster", Set.of(PROPERTIES.MONSTER, PROPERTIES.PENDULUM, PROPERTIES.NORMAL)),
+		Map.entry("pendulum tuner effect monster", Set.of(PROPERTIES.MONSTER, PROPERTIES.PENDULUM, PROPERTIES.EFFECT, PROPERTIES.TUNER)),
+		Map.entry("ritual effect monster", Set.of(PROPERTIES.MONSTER, PROPERTIES.RITUAL, PROPERTIES.EFFECT)),
+		Map.entry("ritual monster", Set.of(PROPERTIES.MONSTER, PROPERTIES.RITUAL)),
+		Map.entry("spell card", Set.of(PROPERTIES.SPELL)),
+		Map.entry("spirit monster", Set.of(PROPERTIES.MONSTER, PROPERTIES.EFFECT, PROPERTIES.SPIRIT)),
+		Map.entry("toon monster", Set.of(PROPERTIES.MONSTER, PROPERTIES.EFFECT, PROPERTIES.TOON)),
+		Map.entry("trap card", Set.of(PROPERTIES.TRAP)),
+		Map.entry("tuner monster", Set.of(PROPERTIES.MONSTER, PROPERTIES.TUNER)),
+		Map.entry("union effect monster", Set.of(PROPERTIES.MONSTER, PROPERTIES.EFFECT, PROPERTIES.UNION)),
+		Map.entry("fusion monster", Set.of(PROPERTIES.MONSTER, PROPERTIES.FUSION)),
+		Map.entry("link monster", Set.of(PROPERTIES.MONSTER, PROPERTIES.LINK)),
+		Map.entry("pendulum effect fusion monster", Set.of(PROPERTIES.MONSTER, PROPERTIES.PENDULUM, PROPERTIES.EFFECT, PROPERTIES.FUSION)),
+		Map.entry("synchro monster", Set.of(PROPERTIES.MONSTER, PROPERTIES.FUSION)),
+		Map.entry("synchro pendulum effect monster", Set.of(PROPERTIES.MONSTER, PROPERTIES.SYNCHRO, PROPERTIES.PENDULUM, PROPERTIES.EFFECT)),
+		Map.entry("synchro tuner monster", Set.of(PROPERTIES.MONSTER, PROPERTIES.SYNCHRO, PROPERTIES.TUNER)),
+		Map.entry("xyz monster", Set.of(PROPERTIES.MONSTER, PROPERTIES.XYZ)),
+		Map.entry("xyz pendulum effect monster", Set.of(PROPERTIES.MONSTER, PROPERTIES.XYZ, PROPERTIES.PENDULUM, PROPERTIES.EFFECT))
+	);
+	private static final Map<String, TYPE> type_map = Map.ofEntries(
+		//maps api strings to type enums	
+		Map.entry("aqua", TYPE.AQUA),
+		Map.entry("beast", TYPE.BEAST),
+		Map.entry("beast-warrior", TYPE.BEAST_WARRIOR),
+		Map.entry("creator-god", TYPE.CREATOR_GOD),
+		Map.entry("cyberse", TYPE.CYBERSE),
+		Map.entry("dinosaur", TYPE.DINOSAUR),
+		Map.entry("divine-beast", TYPE.DIVINE_BEAST),
+		Map.entry("dragon", TYPE.DRAGON),
+		Map.entry("fairy", TYPE.FAIRY),
+		Map.entry("fiend", TYPE.FIEND),
+		Map.entry("fish", TYPE.FISH),
+		Map.entry("insect", TYPE.INSECT),
+		Map.entry("machine", TYPE.MACHINE),
+		Map.entry("plant", TYPE.PLANT),
+		Map.entry("psychic", TYPE.PSYCHIC),
+		Map.entry("pyro", TYPE.PYRO),
+		Map.entry("reptile", TYPE.REPTILE),
+		Map.entry("rock", TYPE.ROCK),
+		Map.entry("sea serpent", TYPE.SEA_SERPENT),
+		Map.entry("spellcaster", TYPE.SPELLCASTER),
+		Map.entry("thunder", TYPE.THUNDER),
+		Map.entry("warrior", TYPE.WARRIOR),
+		Map.entry("winged beast", TYPE.WINGED_BEAST),
+		Map.entry("normal", TYPE.NORMAL),
+		Map.entry("field", TYPE.FIELD),
+		Map.entry("equip", TYPE.EQUIP),
+		Map.entry("continuous", TYPE.CONTINUOUS),
+		Map.entry("counter", TYPE.COUNTER),
+		Map.entry("puick-play", TYPE.QUICK_PLAY),
+		Map.entry("ritual", TYPE.RITUAL)
+	);
+	private static final Map<String, ATTRIBUTE> attribute_map = Map.ofEntries(
+		//maps api strings to attribute enums
+		Map.entry("DARK", ATTRIBUTE.DARK),
+		Map.entry("DIVINE", ATTRIBUTE.DIVINE),
+		Map.entry("EARTH", ATTRIBUTE.EARTH),
+		Map.entry("FIRE", ATTRIBUTE.FIRE),
+		Map.entry("LIGHT", ATTRIBUTE.LIGHT),
+		Map.entry("WATER", ATTRIBUTE.WATER),
+		Map.entry("WIND", ATTRIBUTE.WIND)
+	);
+	private static final Map<String, ARROWS> arrow_map = Map.ofEntries(
+		//maps api strings to arrow enums
+		Map.entry("Top", ARROWS.UP),
+		Map.entry("Top-Right", ARROWS.UP_RIGHT),
+		Map.entry("Right", ARROWS.RIGHT),
+		Map.entry("Bottom-Right", ARROWS.DOWN_RIGHT),
+		Map.entry("Bottom", ARROWS.DOWN),
+		Map.entry("Bottom-Left", ARROWS.DOWN_LEFT),
+		Map.entry("Left", ARROWS.LEFT),
+		Map.entry("Top-Left", ARROWS.UP_LEFT)		
+	);
+	public Card(String name) {
+		findData(name);
+	}
+	public Card(int id) {
+		findData(id);
+	}
+	private <T> void findData(T identifier) {
+		//read json and make tree
+				File jsonInputFile = new File(path);
+				ObjectMapper mapper = new ObjectMapper();
+				JsonNode rootNode;
+				try {
+					rootNode = mapper.readTree(jsonInputFile);
+					//traverse to data
+					JsonNode data = rootNode.path("data");
+					//create iterator to loop
+					Iterator<JsonNode> itr = data.elements();
+					//loop looking for name
+					while(itr.hasNext()) {
+			            JsonNode cardData = itr.next();
+			            //if found
+			            if(identifier.getClass() == Integer.class) {
+			            	if(cardData.path("id").asInt() == (int)identifier) {
+			            		//fill in the data and break the loop
+			            		fill(cardData);
+			            		break;
+			            	}
+			            } else if(cardData.path("name").asText().toLowerCase().equals(identifier.toString().toLowerCase())) {
+			            	//fill in the data and break the loop
+			            	fill(cardData);
+			            	break;
+			            }
+			        }
+					if(this.name == null) {
+//what do I do if not found?
+					}
+				} catch (IOException e) {
+					e.printStackTrace();
+				}
+	}
+	private void fill (JsonNode card_node) {
+		//set name
+		name = card_node.path("name").asText();
+		//set id
+		id = card_node.path("id").asInt();
+		//set card type and some basic properties
+		properties.addAll(prop_map.get(card_node.path("type").asText().toLowerCase()));
+		//set type
+		type.add(type_map.get(card_node.path("race").asText().toLowerCase()));
+		//if monster card
+		if (properties.contains(PROPERTIES.MONSTER)) {
+			//set attribute
+			attribute.add(attribute_map.get(card_node.path("attribute").asText().toLowerCase()));
+			//set attack
+			attack = card_node.path("atk").asInt();
+			//if not a link
+			if(!properties.contains(PROPERTIES.LINK)) {
+				//set level
+				level = card_node.path("level").asInt();
+				//set defense
+				defense = card_node.path("def").asInt();
 			}
-			else
-			{
-				category_hash.get(cat).add(this.num);
+			//if link
+			else {
+				//get link rating
+				linkRating = card_node.path("linkval").asInt();
+				//create iterator to loop through link markers
+				Iterator<JsonNode> itr = card_node.path("linkmarkers").elements();
+				//loop looking for link marker data
+				while(itr.hasNext()) {
+		            //get next element
+					JsonNode marker = itr.next();
+		            //store marker
+					arrows.add(arrow_map.get(marker.asText().toLowerCase()));
+				}
+			}
+			if(!properties.contains(PROPERTIES.PENDULUM)) {
+				//store pend scale
+				pendScale = card_node.path("scale").asInt();
 			}
 		}
-		
 	}
-	public static List<Integer> get_cards(String category)
-	{
-		if(category_hash.containsKey(category))
-			return category_hash.get(category);
-		else
-		{
-			System.out.println("Check category spelling: "+category);
-			System.exit(0);
-			return null;
-		}
-	}
-	public Card small(String type, String attribute, String level, String atk, String def)
-	{
-		SmallWorld.add(this, type, attribute, level, atk, def);
-		return this;
-	}
-	public Card small()
-	{
-		SmallWorld.add(this);
-		return this;
-	}
-	public Card extra(int extra_copies)
-	{
-		extra_deck.set(this.num, extra_copies);
-		extra_deck_size+=extra_copies;
-		Gov.using_extra=true;
-		return this;
-	}
-
 }
