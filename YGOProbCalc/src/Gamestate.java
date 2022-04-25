@@ -3,6 +3,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Stack;
 public class GameState implements Serializable {
+	private static final long serialVersionUID = 8232412217357824883L;
 	//What does the game state look like at any given time
 	//mostly finished, waiting on a way to program effects
 	enum Phase {
@@ -111,7 +112,7 @@ public class GameState implements Serializable {
 		}
 	}
 	public class Chain {
-		List <Effect> chainLink = new Stack<AvailableActions>();
+		List <Effect> chainLink = new Stack<>();
 		public void addLink() {
 			
 		}

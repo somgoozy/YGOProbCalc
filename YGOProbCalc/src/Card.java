@@ -9,6 +9,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 public class Card implements Serializable {
+	private static final long serialVersionUID = -1433849076642137499L;
 	//defines what properties make up a card and has a constructor to autofill data from cardinfo.json
 	boolean faceUp;
 	boolean negated;

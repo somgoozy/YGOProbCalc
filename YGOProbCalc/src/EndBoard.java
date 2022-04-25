@@ -1,6 +1,5 @@
 import java.util.HashSet;
 import java.util.Set;
-
 public class EndBoard {
 	//what the user wants their end board to look like with an integrated scoring system to allow
 	//for multiple boards depending on the hand
@@ -32,5 +31,9 @@ public class EndBoard {
 			this.score = score;
 			this.cardName = name;
 		}
+	}
+	public static int Rate(GameState copy) {
+		// TODO Auto-generated method stub
+		return 0;
 	}
 }

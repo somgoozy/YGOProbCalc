@@ -12,7 +12,8 @@ class AvailableActions {
 		EFFECT1,
 		EFFECT2,
 		EFFECT3,
-		EFFECT4
+		EFFECT4,
+		PHASECHANGE
 	}
 	//locations of the action
 	public enum WHERE{

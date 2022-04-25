@@ -1,38 +1,57 @@
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import org.apache.commons.lang3.SerializationUtils;
 public class Controller {
-	//a multithreaded implementation of the genetic algorithm to do tree traversal by a score system
-	//currently writing
-	//incomplete
 	int WEIGHT = 10;
-	public void Start(GameState game, EndBoard board, int generations, int hands) {
-		
-	}
-	private void PlayHand(GameState game, EndBoard board, ScoreBoard threadScore) {
-		AvailableActions myActions = new AvailableActions(game);
-		List<AvailableActions.Action> path;
-		AvailableActions.Action choice;
-		//loop until no paths are available
-		while(myActions.moves != null) {
-			//choose path
-			choice = Pathfind(myActions, threadScore);
-			//update gamestate with path chosen
-			myActions.DoAction(game, choice);
-			//update current paths taken list
-			
-			//calculate score of node
-			//compare node score to node high score
-				//if larger make new high score
-				//update highscore paths taken list
-			//update paths
+	GameState cleanGame;
+	ScoreBoard score;
+	
+	public void Learn(int learningCycles) {
+		for(int i = 0; i < learningCycles; i++) {
+			GameState copy = SerializationUtils.clone(cleanGame);
+			AvailableActions myActions = new AvailableActions(copy);
+			List<AvailableActions.Action> currentPath = new ArrayList<>();
+			AvailableActions.Action choice;
+			int bestPath = 0;
+			int currentScore = 0;
+			int highScore = 0;
+			//loop until no paths are available
+			while(myActions.moves != null && copy.currentPhase != GameState.Phase.END) {
+				//choose path
+				choice = Pathfind(myActions, score);
+				//update gamestate with path chosen
+				myActions.DoAction(copy, choice);
+				//update current paths taken list
+				currentPath.add(choice);
+				//calculate score of node
+				currentScore = EndBoard.Rate(copy);
+				//compare node score to node high score
+				if (currentScore > highScore) {
+					//update highscore and paths taken list
+					highScore = currentScore;
+					bestPath = currentPath.size();
+				}
+				myActions = new AvailableActions(copy);
+			}
+			//update scoreboard
+			score.Update(currentPath.subList(0, bestPath), highScore);
 		}
-		//update scoreboard
 	}
 	private AvailableActions.Action Pathfind(AvailableActions actions, ScoreBoard scores) {
 		//calculates the route to take by checking the scoreboard and using it
-		//to randomly path falling through the tree
+		//to randomly path falling through the 
+
+		//remove phase change
+		AvailableActions.Action phaseChange = null;
+		for(AvailableActions.Action action: actions.moves) {
+			if(action.action == AvailableActions.WHAT.PHASECHANGE) {
+				phaseChange = action;
+				actions.moves.remove(phaseChange);
+			}
+		}
 		int total = 0;		
 		//get total
 		for(AvailableActions.Action scoreAction: actions.moves) {
@@ -42,13 +61,14 @@ public class Controller {
 		int random = (int)Math.floor(Math.random() * (total + 1));
 		for(AvailableActions.Action scoredAction: actions.moves) {
 			//subtract weighted score from total
-			total -= (WEIGHT + scores.scoreBoard.getOrDefault(scoredAction.action, 0));
+			random -= (WEIGHT + scores.scoreBoard.getOrDefault(scoredAction.action, 0));
 			//if the total is below zero we have a random to return
-			if(total < 0) {
+			if(random < 0) {
 				return scoredAction;
 			}
 		}
-		return null;
+		//return advance phase
+		return phaseChange;
 	}
 	public class ScoreCard {
 		AvailableActions.Action move;

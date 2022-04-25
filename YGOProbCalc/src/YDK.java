@@ -1,10 +1,9 @@
 import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
-import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
-public class YDK implements Serializable {
+public class YDK{
 	//generates array lists of cards given a ydk file
 	//mostly finished
 	//needs error handling
